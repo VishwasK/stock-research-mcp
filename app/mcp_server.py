@@ -78,3 +78,21 @@ def add_research_source(ticker: str,source_type: str,title: str,url: str,publish
     with SessionLocal() as db:
         row=repository.add_source(db,ticker,source_type=source_type,title=title,url=url,publisher=publisher,published_date=date.fromisoformat(published_date) if published_date else None,summary=summary,importance=importance)
         return {"id":row.id,"ticker":ticker.upper(),"title":title}
+
+
+@mcp.tool()
+def update_capital_structure(ticker: str,as_of_date: str,common_shares: float|None=None,preferred_shares: float|None=None,warrants_count: float|None=None,warrant_avg_strike: float|None=None,options_count: float|None=None,rsus_count: float|None=None,convertible_debt: float|None=None,convertible_shares: float|None=None,atm_remaining: float|None=None,shelf_capacity: float|None=None,fully_diluted_shares: float|None=None,fully_diluted_market_cap: float|None=None,reverse_split_count_5y: int|None=None,last_reverse_split_date: str|None=None,dilution_risk: str|None=None,notes: str|None=None) -> dict[str,Any]:
+    """Create or update a dated capital-structure record."""
+    values=locals().copy(); ticker_value=values.pop("ticker"); asof=date.fromisoformat(values.pop("as_of_date"))
+    last_rs=values.pop("last_reverse_split_date")
+    values["last_reverse_split_date"]=date.fromisoformat(last_rs) if last_rs else None
+    with SessionLocal() as db:
+        row=repository.upsert_capital_structure(db,ticker_value,asof,**values)
+        return {"id":row.id,"ticker":ticker_value.upper(),"as_of_date":row.as_of_date.isoformat(),"dilution_risk":row.dilution_risk}
+
+@mcp.tool()
+def get_management_history(ticker: str) -> list[dict[str,Any]]:
+    """Return stored founder/executive history for a company."""
+    with SessionLocal() as db:
+        rows=repository.management_history(db,ticker)
+        return [{"name":person.name,"role":link.role,"founder":link.founder,"current":link.current,"ownership_pct":link.ownership_pct,"credibility_notes":link.credibility_notes,"success_history":link.success_history,"failure_history":link.failure_history,"regulatory_history":link.regulatory_history} for link,person in rows]
