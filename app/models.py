@@ -1,3 +1,4 @@
+from __future__ import annotations
 from datetime import date, datetime
 from enum import Enum
 from sqlalchemy import Boolean, Date, DateTime, Float, ForeignKey, Integer, String, Text, UniqueConstraint
