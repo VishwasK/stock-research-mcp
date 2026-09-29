@@ -66,3 +66,20 @@ def add_source(db: Session, ticker: str, **values):
     company=get_company(db,ticker)
     if not company: raise ValueError(f"Unknown ticker: {ticker}")
     row=models.ResearchSource(company_id=company.id,**values); db.add(row); db.commit(); db.refresh(row); return row
+
+
+def upsert_capital_structure(db: Session, ticker: str, as_of_date: date, **values):
+    company=get_company(db,ticker)
+    if not company: raise ValueError(f"Unknown ticker: {ticker}")
+    row=db.scalar(select(models.CapitalStructure).where(models.CapitalStructure.company_id==company.id,models.CapitalStructure.as_of_date==as_of_date))
+    if not row:
+        row=models.CapitalStructure(company_id=company.id,as_of_date=as_of_date); db.add(row)
+    for key,value in values.items():
+        if value is not None and hasattr(row,key): setattr(row,key,value)
+    db.commit(); db.refresh(row); return row
+
+def management_history(db: Session, ticker: str):
+    company=get_company(db,ticker)
+    if not company: raise ValueError(f"Unknown ticker: {ticker}")
+    stmt=select(models.CompanyPerson,models.Person).join(models.Person,models.CompanyPerson.person_id==models.Person.id).where(models.CompanyPerson.company_id==company.id)
+    return list(db.execute(stmt).all())
