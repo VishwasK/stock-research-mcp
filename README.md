@@ -107,3 +107,5 @@ pytest
 - Phase 6: optional dashboard
 
 No brokerage integration or automated trading is planned.
+
+CI validates tests, seed execution, and application import on Python 3.12.
